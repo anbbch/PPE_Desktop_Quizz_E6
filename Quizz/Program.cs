@@ -1,4 +1,5 @@
-using Connection_Base;
+using Quizz.Controller;
+using Quizz.Model;
 
 namespace Quizz
 {
