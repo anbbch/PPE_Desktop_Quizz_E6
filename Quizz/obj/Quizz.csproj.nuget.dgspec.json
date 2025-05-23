@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Administrateur\\source\\repos\\Quizz - Copie\\Quizz.csproj": {}
+    "C:\\Users\\Administrateur\\source\\repos\\Quizz\\Quizz.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Administrateur\\source\\repos\\Quizz - Copie\\Quizz.csproj": {
+    "C:\\Users\\Administrateur\\source\\repos\\Quizz\\Quizz.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Administrateur\\source\\repos\\Quizz - Copie\\Quizz.csproj",
+        "projectUniqueName": "C:\\Users\\Administrateur\\source\\repos\\Quizz\\Quizz.csproj",
         "projectName": "Quizz",
-        "projectPath": "C:\\Users\\Administrateur\\source\\repos\\Quizz - Copie\\Quizz.csproj",
+        "projectPath": "C:\\Users\\Administrateur\\source\\repos\\Quizz\\Quizz.csproj",
         "packagesPath": "C:\\Users\\Administrateur\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Administrateur\\source\\repos\\Quizz - Copie\\obj\\",
+        "outputPath": "C:\\Users\\Administrateur\\source\\repos\\Quizz\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -53,6 +53,10 @@
             "MySql.Data": {
               "target": "Package",
               "version": "[9.1.0, )"
+            },
+            "PDFsharp": {
+              "target": "Package",
+              "version": "[6.1.1, )"
             }
           },
           "imports": [

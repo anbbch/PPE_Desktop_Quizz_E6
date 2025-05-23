@@ -1,7 +1,9 @@
 ﻿using MySql.Data.MySqlClient;
+using Mysqlx.Crud;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Windows.Forms;
 
 namespace Quizz.Controller
 {
@@ -16,7 +18,7 @@ namespace Quizz.Controller
 
         public DataTable LoadThemes()
         {
-            string query = "SELECT id, name FROM Thème";
+            string query = "SELECT t.id AS theme_id, t.name AS theme_name, q.id AS quiz_id, q.libelle AS quiz_name FROM Thème t LEFT JOIN Questionnaire q ON t.id = q.theme_id ORDER BY t.name, q.libelle";
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();

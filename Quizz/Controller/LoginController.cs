@@ -18,10 +18,11 @@ namespace Quizz.Controller
             return user.VerifyLogin(username, password);
         }
 
-        public void CreateUser(string name, string username, string password)
+        public void CreateUser(string name, string username, string password, string email)
         {
-            string status = "User";
-            user.AddUser(name, status, username, password);
+            User user = new User();
+            user.AddUser(name, "User", username, password, email);
         }
+
     }
 }
