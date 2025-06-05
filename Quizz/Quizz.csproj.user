@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Compile Update="View\CreateQuiz.cs">
+    <Compile Update="CreateQuiz.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="View\LoginForm.cs">
+    <Compile Update="LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="View\MainForm.cs">
+    <Compile Update="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="View\Prompt.cs">
+    <Compile Update="Prompt.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="View\QuizForm.cs">

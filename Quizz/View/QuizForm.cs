@@ -9,35 +9,74 @@ namespace Quizz
 {
     public partial class QuizForm : Form
     {
-        private QuizController quizController;
+        private List<Question> questions; // Liste des questions
+        private int currentQuestionIndex = 0; // Index de la question actuelle
+        private int score = 0; // Score de l'utilisateur
+        private int themeId; // ID du thème sélectionné
 
         public QuizForm(int themeId)
         {
             InitializeComponent();
-            this.BackColor = Color.FromArgb(255, 245, 225); // fond beige clair
-            this.Font = new Font("Segoe UI", 11); // police agréable et moderne
-
-            lblQuestion.ForeColor = Color.FromArgb(101, 67, 33); // texte marron
-            lblQuestion.Font = new Font("Segoe UI", 13, FontStyle.Bold);
-
-            panelAnswers.BackColor = Color.FromArgb(255, 245, 225); // fond des réponses en blanc cassé
-            panelAnswers.BorderStyle = BorderStyle.None;
-
-            quizController = new QuizController(themeId);
+            this.themeId = themeId; // Récupère l'ID du thème
+            LoadQuestions();
             ShowQuestion();
         }
 
         // Charge les questions depuis la base de données
+        private void LoadQuestions()
+        {
+            this.Text = "Quizz";
+            questions = new List<Question>();
+
+            DBConnection DBCon = new DBConnection
+            {
+                Server = "localhost",
+                DatabaseName = "quizz",
+                UserName = "root",
+                Password = Crypto.Decrypt("kt0xTyBNQsGrjbt16LKj+Q==")
+            };
+
+            if (DBCon.IsConnect())
+            {
+                string query = "SELECT id, conteneu, reponse, goodAnswer, type_id FROM questions WHERE questionnaire_id = @ThemeId";
+                using (var cmd = new MySqlCommand(query, DBCon.Connection))
+                {
+                    cmd.Parameters.AddWithValue("@ThemeId", themeId); // Filtrage par thème
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            questions.Add(new Question
+                            {
+                                Id = reader.GetInt32("id"),
+                                Contenu = reader.GetString("conteneu"),
+                                Reponse = reader.GetString("reponse"),
+                                GoodAnswer = reader.GetString("goodAnswer"),
+                                TypeId = reader.GetInt32("type_id")
+                            });
+                        }
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Échec de la connexion à la base de données.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
         private void ShowQuestion()
         {
-            var question = quizController.GetNextQuestion();
-
-            if (question != null)
+            if (currentQuestionIndex < questions.Count)
             {
-                lblQuestion.Text = question.Contenu;
+                var question = questions[currentQuestionIndex];
+                lblQuestion.Text = question.Contenu; // Affiche la question
+
+                // Supprime les anciens boutons de réponse
                 panelAnswers.Controls.Clear();
 
-                var possibleAnswers = quizController.GetPossibleAnswers(question);
+                // Génère les boutons pour les réponses
+                var possibleAnswers = GetPossibleAnswers(question);
                 int yOffset = 0;
 
                 foreach (var answer in possibleAnswers)
@@ -45,27 +84,20 @@ namespace Quizz
                     Button answerButton = new Button
                     {
                         Text = answer,
-                        Tag = answer,
+                        Tag = answer, // Associe la réponse au bouton via Tag
                         Location = new System.Drawing.Point(10, yOffset),
-                        Width = 400,
-                        Height = 35,
-                        BackColor = Color.FromArgb(101, 67, 33), // fond marron
-                        ForeColor = Color.White,                // texte blanc
-                        FlatStyle = FlatStyle.Flat,
-                        Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                        AutoSize = true
                     };
-                    answerButton.FlatAppearance.BorderSize = 0;
 
-
-                    answerButton.Click += (s, e) => HandleAnswerClick(question, answer);
+                    answerButton.Click += btnAnswer_Click; // Associe l'événement de clic
                     panelAnswers.Controls.Add(answerButton);
-                    yOffset += 40;
+                    yOffset += 40; // Décalage vertical
                 }
             }
             else
             {
-                MessageBox.Show($"Quiz terminé ! Votre score : {quizController.GetScore()}/{quizController.GetQuestions().Count}",
-                    "Résultat", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Quiz terminé
+                MessageBox.Show($"Quiz terminé ! Votre score : {score}/{questions.Count}", "Résultat", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
         }
@@ -102,22 +134,123 @@ namespace Quizz
             return answers.OrderBy(a => Guid.NewGuid()).ToList();
         }
 
-
-        private void HandleAnswerClick(Question question, string selectedAnswer)
+        // Gère l'événement de clic sur une réponse
+        private void btnAnswer_Click(object sender, EventArgs e)
         {
-            if (quizController.CheckAnswer(question, selectedAnswer))
+            Button clickedButton = (Button)sender;
+            string selectedAnswer = clickedButton.Tag.ToString(); // Récupère la réponse sélectionnée
+            var currentQuestion = questions[currentQuestionIndex];
+
+            if (!string.IsNullOrEmpty(currentQuestion.GoodAnswer) && currentQuestion.GoodAnswer.Split(';').Contains(selectedAnswer))
             {
+                score++;
                 MessageBox.Show("Bonne réponse !", "Correct", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
-                MessageBox.Show($"Mauvaise réponse. La bonne réponse était : {question.GoodAnswer ?? "Inconnue"}",
-                    "Incorrect", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"Mauvaise réponse. La bonne réponse était : {currentQuestion.GoodAnswer ?? "Inconnue"}", "Incorrect", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
-            quizController.IncrementQuestionIndex();
+            // Passe à la question suivante
+            currentQuestionIndex++;
             ShowQuestion();
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //// Affiche la question actuelle
+        //private void ShowQuestion()
+        //{
+        //    if (currentQuestionIndex < questions.Count)
+        //    {
+        //        var question = questions[currentQuestionIndex];
+        //        lblQuestion.Text = question.Contenu; // Affiche la question
+
+        //        // Supprime les anciens boutons de réponse
+        //        panelAnswers.Controls.Clear();
+
+        //        // Génère les boutons pour les réponses
+        //        var possibleAnswers = GetPossibleAnswers(question);
+        //        int yOffset = 0;
+
+        //        foreach (var answer in possibleAnswers)
+        //        {
+        //            Button answerButton = new Button
+        //            {
+        //                Text = answer,
+        //                Tag = answer, // Associe la réponse au bouton via Tag
+        //                Location = new System.Drawing.Point(10, yOffset),
+        //                AutoSize = true
+        //            };
+
+        //            answerButton.Click += btnAnswer_Click; // Associe l'événement de clic
+        //            panelAnswers.Controls.Add(answerButton);
+        //            yOffset += 40; // Décalage vertical
+        //        }
+        //    }
+        //    else
+        //    {
+        //        // Quiz terminé
+        //        MessageBox.Show($"Quiz terminé ! Votre score : {score}/{questions.Count}", "Résultat", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //        this.Close();
+        //    }
+        //}
+
+        //// Génère des réponses possibles pour la question actuelle
+        //private List<string> GetPossibleAnswers(Question question)
+        //{
+        //    List<string> answers = new List<string> { question.Reponse };
+
+        //    // Ajoute des réponses fictives
+        //    while (answers.Count < 4)
+        //    {
+        //        string fakeAnswer = "Fausse réponse " + answers.Count;
+        //        if (!answers.Contains(fakeAnswer))
+        //        {
+        //            answers.Add(fakeAnswer);
+        //        }
+        //    }
+
+        //    // Mélange les réponses pour aléatoirement les disposer
+        //    return answers.OrderBy(a => Guid.NewGuid()).ToList();
+        //}
+
+        //// Gère l'événement de clic sur une réponse
+        //private void btnAnswer_Click(object sender, EventArgs e)
+        //{
+        //    Button clickedButton = (Button)sender;
+        //    string selectedAnswer = clickedButton.Tag.ToString(); // Récupère la réponse sélectionnée
+        //    var currentQuestion = questions[currentQuestionIndex];
+
+        //    // Vérifie si la réponse est correcte
+        //    if (selectedAnswer == currentQuestion.Reponse)
+        //    {
+        //        score++;
+        //        MessageBox.Show("Bonne réponse !", "Correct", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show($"Mauvaise réponse. La bonne réponse était : {currentQuestion.Reponse}", "Incorrect", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        //    }
+
+        //    // Passe à la question suivante
+        //    currentQuestionIndex++;
+        //    ShowQuestion();
+        //}
     }
 }

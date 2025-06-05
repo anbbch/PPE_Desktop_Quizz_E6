@@ -39,32 +39,30 @@ namespace Quizz.Model
         }
 
         // Méthode pour ajouter un utilisateur dans la base
-        public void AddUser(string name, string status, string username, string password, string email)
+        public void AddUser(string name, string status, string username, string password)
         {
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(password, salt);
 
-            using (var cmd = new MySqlCommand("sp_AddUser", connection))
+            string query = "INSERT INTO Users (name, status, username, password, salt) VALUES (@Name, @Status, @Username, @Password, @Salt)";
+            using (var cmd = new MySqlCommand(query, connection))
             {
-                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@p_name", name);
-                cmd.Parameters.AddWithValue("@p_status", status);
-                cmd.Parameters.AddWithValue("@p_username", username);
-                cmd.Parameters.AddWithValue("@p_password", hashedPassword);
-                cmd.Parameters.AddWithValue("@p_salt", salt);
-                cmd.Parameters.AddWithValue("@p_email", email);
+                cmd.Parameters.AddWithValue("@Name", name);
+                cmd.Parameters.AddWithValue("@Status", status);
+                cmd.Parameters.AddWithValue("@Username", username);
+                cmd.Parameters.AddWithValue("@Password", hashedPassword);
+                cmd.Parameters.AddWithValue("@Salt", salt);
                 cmd.ExecuteNonQuery();
             }
         }
 
-
-
+        // Méthode pour vérifier le login d'un utilisateur
         public bool VerifyLogin(string username, string password)
         {
-            using (var cmd = new MySqlCommand("sp_GetUserCredentials", connection))
+            string query = "SELECT password, salt FROM Users WHERE username = @Username";
+            using (var cmd = new MySqlCommand(query, connection))
             {
-                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@p_username", username);
+                cmd.Parameters.AddWithValue("@Username", username);
 
                 using (var reader = cmd.ExecuteReader())
                 {
@@ -73,42 +71,15 @@ namespace Quizz.Model
                         string storedPassword = reader.GetString("password");
                         string salt = reader.GetString("salt");
 
+                        // Hasher le mot de passe fourni avec le salt stocké
                         string hashedPassword = HashPassword(password, salt);
 
+                        // Vérifier si les deux mots de passe correspondent
                         return hashedPassword == storedPassword;
                     }
                 }
             }
-            return false;
+            return false; // Aucun utilisateur trouvé ou mot de passe incorrect
         }
-
-
-
-
-        // Méthode pour vérifier le login d'un utilisateur
-        //public bool VerifyLogin(string username, string password)
-        //{
-        //    string query = "SELECT password, salt FROM Users WHERE username = @Username";
-        //    using (var cmd = new MySqlCommand(query, connection))
-        //    {
-        //        cmd.Parameters.AddWithValue("@Username", username);
-
-        //        using (var reader = cmd.ExecuteReader())
-        //        {
-        //            if (reader.Read())
-        //            {
-        //                string storedPassword = reader.GetString("password");
-        //                string salt = reader.GetString("salt");
-
-        //                // Hasher le mot de passe fourni avec le salt stocké
-        //                string hashedPassword = HashPassword(password, salt);
-
-        //                // Vérifier si les deux mots de passe correspondent
-        //                return hashedPassword == storedPassword;
-        //            }
-        //        }
-        //    }
-        //    return false; // Aucun utilisateur trouvé ou mot de passe incorrect
-        //}
     }
 }
